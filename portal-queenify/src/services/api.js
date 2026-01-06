@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+// Gunakan proxy path untuk menghindari CORS
+// Di development: melalui Vite proxy
+// Di production: langsung ke API (pastikan CORS sudah diatur)
+const isDev = import.meta.env.DEV;
+
+const IDENTITY_BASE = isDev ? '/identity-api' : import.meta.env.VITE_IDENTITY_API;
+const ATTENDANCE_BASE = isDev ? '/attendance-api' : import.meta.env.VITE_ATTENDANCE_API;
+
 // Axios instance untuk Identity Service (Auth & User Management)
 const identityApi = axios.create({
-  baseURL: import.meta.env.VITE_IDENTITY_API,
+  baseURL: IDENTITY_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +18,7 @@ const identityApi = axios.create({
 
 // Axios instance untuk Attendance Service (Pencatatan Kehadiran)
 const attendanceApi = axios.create({
-  baseURL: import.meta.env.VITE_ATTENDANCE_API,
+  baseURL: ATTENDANCE_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -61,19 +69,20 @@ export const getAllUsers = async () => {
 
 // ==================== ATTENDANCE SERVICE API ====================
 
-// Submit absensi
-export const submitAbsensi = async (userId, status) => {
-  console.log('Submitting attendance:', { user_id: userId, status }); // Debug
+// Submit absensi dengan format lengkap (sesuai gambar)
+export const submitAttendance = async (userId, eventType, category, notes = '') => {
+  console.log('Submitting attendance:', { user_id: userId, event_type: eventType, category, notes });
   
-  // Coba beberapa format request body yang mungkin diterima backend
   const payload = {
     user_id: userId,
-    userId: userId,
-    status: status,
+    event_type: eventType,  // CHECK_IN atau CHECK_OUT
+    category: category,     // WFO, WFH, SAKIT, IZIN
+    notes: notes || null
   };
   
   try {
-    const response = await attendanceApi.post('/api/v1/attendance/log', payload);
+    const response = await attendanceApi.post('/api/logs', payload);
+    console.log('Attendance response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Attendance API error:', error.response?.data || error.message);
@@ -81,22 +90,29 @@ export const submitAbsensi = async (userId, status) => {
   }
 };
 
+// Legacy function untuk backward compatibility
+export const submitAbsensi = async (userId, status) => {
+  let category = 'WFO';
+  if (status === 'Izin') category = 'IZIN';
+  else if (status === 'Sakit') category = 'SAKIT';
+  
+  return submitAttendance(userId, 'CHECK_IN', category, `Absensi ${status}`);
+};
+
 // Get semua log attendance (Admin)
 export const getAttendanceLogs = async () => {
-  const response = await attendanceApi.get('/api/v1/attendance/all');
+  const response = await attendanceApi.get('/api/logs');
   return response.data;
 };
 
 // Get attendance logs by user ID
 export const getAttendanceByUser = async (userId) => {
-  const response = await attendanceApi.get(`/api/v1/attendance/user/${userId}`);
+  const response = await attendanceApi.get(`/api/logs?user_id=${userId}`);
   return response.data;
 };
 
-// Get attendance summary/statistics
+// Get attendance summary/statistics (jika ada endpoint-nya)
 export const getAttendanceSummary = async () => {
-  const response = await attendanceApi.get('/api/v1/attendance/summary');
+  const response = await attendanceApi.get('/api/logs?limit=100');
   return response.data;
 };
-
-export { identityApi, attendanceApi };

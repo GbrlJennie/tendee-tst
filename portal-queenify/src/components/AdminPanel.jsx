@@ -43,6 +43,14 @@ const AdminPanel = () => {
     setIsLoadingUsers(false);
   };
 
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return {
+      time: date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    };
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('id-ID', {
       dateStyle: 'medium',
@@ -52,8 +60,14 @@ const AdminPanel = () => {
 
   // Find user name by ID
   const getUserName = (userId) => {
-    const foundUser = users.find((u) => u.id === userId);
-    return foundUser?.name || userId;
+    const foundUser = users.find((u) => String(u.id) === String(userId));
+    return foundUser?.name || `User #${userId}`;
+  };
+
+  // Get user status by ID
+  const getUserStatus = (userId) => {
+    const foundUser = users.find((u) => String(u.id) === String(userId));
+    return foundUser?.status || 'unknown';
   };
 
   if (!isAdmin()) {
@@ -119,27 +133,41 @@ const AdminPanel = () => {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>No</th>
-                      <th>User ID</th>
-                      <th>Nama User</th>
-                      <th>Status</th>
-                      <th>Waktu</th>
+                      <th>TIME</th>
+                      <th>USER ID</th>
+                      <th>NAMA</th>
+                      <th>EVENT</th>
+                      <th>CATEGORY</th>
+                      <th>NOTES</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.map((log, index) => (
-                      <tr key={log.id || index}>
-                        <td>{index + 1}</td>
-                        <td><code>{log.user_id}</code></td>
-                        <td>{getUserName(log.user_id)}</td>
-                        <td>
-                          <span className={`status-badge status-${log.status?.toLowerCase()}`}>
-                            {log.status}
-                          </span>
-                        </td>
-                        <td>{formatDate(log.created_at || log.timestamp)}</td>
-                      </tr>
-                    ))}
+                    {logs.map((log, index) => {
+                      const { time, date } = formatTime(log.timestamp);
+                      return (
+                        <tr key={log.id || index}>
+                          <td>
+                            <div className="time-cell">
+                              <span className="time">{time}</span>
+                              <span className="date">{date}</span>
+                            </div>
+                          </td>
+                          <td><span className="user-id-badge">#{log.user_id}</span></td>
+                          <td>{getUserName(log.user_id)}</td>
+                          <td>
+                            <span className={`event-badge ${log.event_type?.toLowerCase()}`}>
+                              {log.event_type}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`category-badge ${log.category?.toLowerCase()}`}>
+                              {log.category}
+                            </span>
+                          </td>
+                          <td>{log.notes || '-'}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -167,27 +195,29 @@ const AdminPanel = () => {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>No</th>
                       <th>ID</th>
-                      <th>Nama</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Terdaftar</th>
+                      <th>NAMA</th>
+                      <th>EMAIL</th>
+                      <th>ROLE</th>
+                      <th>STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((u, index) => (
                       <tr key={u.id || index}>
-                        <td>{index + 1}</td>
-                        <td><code>{u.id}</code></td>
-                        <td>{u.name}</td>
+                        <td><span className="user-id-badge">#{u.id}</span></td>
+                        <td className="user-name">{u.name}</td>
                         <td>{u.email}</td>
                         <td>
                           <span className={`role-badge role-${u.role?.toLowerCase()}`}>
-                            {u.role || 'user'}
+                            {u.role || 'employee'}
                           </span>
                         </td>
-                        <td>{u.created_at ? formatDate(u.created_at) : '-'}</td>
+                        <td>
+                          <span className={`status-user-badge ${u.status?.toLowerCase()}`}>
+                            {u.status === 'active' ? '● Active' : '● Inactive'}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
