@@ -99,10 +99,16 @@ export const submitAbsensi = async (userId, status) => {
   return submitAttendance(userId, 'CHECK_IN', category, `Absensi ${status}`);
 };
 
-// Get semua log attendance (Admin)
-export const getAttendanceLogs = async () => {
-  const response = await attendanceApi.get('/api/logs');
-  return response.data;
+// Get semua log attendance (Admin) - ambil lebih banyak data
+export const getAttendanceLogs = async (limit = 100) => {
+  try {
+    const response = await attendanceApi.get(`/api/logs?limit=${limit}`);
+    console.log('Raw attendance response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching attendance logs:', error);
+    throw error;
+  }
 };
 
 // Get attendance logs by user ID

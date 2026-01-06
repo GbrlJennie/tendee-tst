@@ -177,22 +177,6 @@ const Dashboard = () => {
                 >
                   🏠 WFH
                 </button>
-                <button
-                  type="button"
-                  className={`category-btn ${category === 'IZIN' ? 'active' : ''}`}
-                  onClick={() => setCategory('IZIN')}
-                  disabled={!isUserActive}
-                >
-                  📝 Izin
-                </button>
-                <button
-                  type="button"
-                  className={`category-btn ${category === 'SAKIT' ? 'active' : ''}`}
-                  onClick={() => setCategory('SAKIT')}
-                  disabled={!isUserActive}
-                >
-                  🏥 Sakit
-                </button>
               </div>
             </div>
 

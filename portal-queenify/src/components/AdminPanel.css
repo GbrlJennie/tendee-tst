@@ -151,6 +151,78 @@
   cursor: not-allowed;
 }
 
+/* Filter Section */
+.filter-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #0f172a;
+  border-radius: 8px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.filter-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  min-width: 180px;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.clear-filter-btn {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.log-count {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Table */
 .admin-panel .table-container {
   overflow-x: auto;
@@ -251,7 +323,7 @@
 
 .time-cell .time {
   font-weight: 600;
-  color: #f8fafc;
+  color: #688097;
   font-size: 0.95rem;
 }
 
@@ -269,12 +341,12 @@
   font-weight: 600;
 }
 
-.event-badge.check_in {
+.event-badge.check-in {
   background: rgba(59, 130, 246, 0.2);
   color: #93c5fd;
 }
 
-.event-badge.check_out {
+.event-badge.check-out {
   background: transparent;
   color: #94a3b8;
   border: 1px solid #334155;

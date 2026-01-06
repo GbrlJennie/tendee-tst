@@ -6,14 +6,24 @@ import './AdminPanel.css';
 const AdminPanel = () => {
   const { user, logout, isAdmin } = useAuth();
   const [logs, setLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [activeTab, setActiveTab] = useState('logs');
+  
+  // Filter states
+  const [filterDate, setFilterDate] = useState('');
+  const [filterUserId, setFilterUserId] = useState('');
 
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Apply filters when logs or filter values change
+  useEffect(() => {
+    applyFilters();
+  }, [logs, filterDate, filterUserId]);
 
   const fetchAllData = async () => {
     await Promise.all([fetchLogs(), fetchUsers()]);
@@ -22,11 +32,27 @@ const AdminPanel = () => {
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      const response = await getAttendanceLogs();
-      setLogs(response.data || response || []);
+      const response = await getAttendanceLogs(200);
+      console.log('Raw attendance response:', response);
+      
+      // Handle different response structures
+      let logsData = [];
+      if (Array.isArray(response)) {
+        logsData = response;
+      } else if (response && Array.isArray(response.data)) {
+        logsData = response.data;
+      } else if (response && response.logs) {
+        logsData = response.logs;
+      }
+      
+      console.log('Processed logs data:', logsData);
+      console.log('Total logs:', logsData.length);
+      setLogs(logsData);
+      setFilteredLogs(logsData); // Set initial filtered logs
     } catch (error) {
       console.error('Error fetching logs:', error);
       setLogs([]);
+      setFilteredLogs([]);
     }
     setIsLoadingLogs(false);
   };
@@ -35,12 +61,47 @@ const AdminPanel = () => {
     setIsLoadingUsers(true);
     try {
       const response = await getAllUsers();
-      setUsers(response.data || response || []);
+      console.log('Users response:', response);
+      const usersData = Array.isArray(response) ? response : [];
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
     }
     setIsLoadingUsers(false);
+  };
+
+  const applyFilters = () => {
+    let filtered = [...logs];
+    
+    console.log('Applying filters to', logs.length, 'logs');
+    console.log('Filter date:', filterDate);
+    console.log('Filter user ID:', filterUserId);
+    
+    // Filter by date
+    if (filterDate) {
+      filtered = filtered.filter(log => {
+        const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+        return logDate === filterDate;
+      });
+      console.log('After date filter:', filtered.length);
+    }
+    
+    // Filter by user ID
+    if (filterUserId) {
+      filtered = filtered.filter(log => 
+        String(log.user_id).includes(filterUserId)
+      );
+      console.log('After user ID filter:', filtered.length);
+    }
+    
+    console.log('Final filtered logs:', filtered.length);
+    setFilteredLogs(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilterDate('');
+    setFilterUserId('');
   };
 
   const formatTime = (dateString) => {
@@ -51,23 +112,10 @@ const AdminPanel = () => {
     };
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('id-ID', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
-
   // Find user name by ID
   const getUserName = (userId) => {
     const foundUser = users.find((u) => String(u.id) === String(userId));
     return foundUser?.name || `User #${userId}`;
-  };
-
-  // Get user status by ID
-  const getUserStatus = (userId) => {
-    const foundUser = users.find((u) => String(u.id) === String(userId));
-    return foundUser?.status || 'unknown';
   };
 
   if (!isAdmin()) {
@@ -105,13 +153,13 @@ const AdminPanel = () => {
           className={`nav-tab ${activeTab === 'logs' ? 'active' : ''}`}
           onClick={() => setActiveTab('logs')}
         >
-          📊 Log Kehadiran
+          📊 Log Kehadiran ({logs.length})
         </button>
         <button
           className={`nav-tab ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
-          👥 Daftar User
+          👥 Daftar User ({users.length})
         </button>
       </nav>
 
@@ -121,14 +169,47 @@ const AdminPanel = () => {
           <section className="panel-section">
             <div className="section-header">
               <h2>📊 Semua Log Kehadiran</h2>
-              <button onClick={fetchLogs} className="refresh-button" disabled={isLoadingLogs}>
-                🔄 Refresh
-              </button>
+              <div className="header-actions">
+                <span className="log-count">{filteredLogs.length} dari {logs.length} log</span>
+                <button onClick={fetchLogs} className="refresh-button" disabled={isLoadingLogs}>
+                  🔄 Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Section */}
+            <div className="filter-section">
+              <div className="filter-group">
+                <label htmlFor="filterDate">📅 Filter Tanggal:</label>
+                <input
+                  type="date"
+                  id="filterDate"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className="filter-input"
+                />
+              </div>
+              <div className="filter-group">
+                <label htmlFor="filterUserId">👤 Filter User ID:</label>
+                <input
+                  type="text"
+                  id="filterUserId"
+                  value={filterUserId}
+                  onChange={(e) => setFilterUserId(e.target.value)}
+                  placeholder="Cari user ID..."
+                  className="filter-input"
+                />
+              </div>
+              {(filterDate || filterUserId) && (
+                <button onClick={clearFilters} className="clear-filter-btn">
+                  ✕ Clear Filter
+                </button>
+              )}
             </div>
 
             {isLoadingLogs ? (
               <div className="loading">Memuat data...</div>
-            ) : logs.length > 0 ? (
+            ) : filteredLogs.length > 0 ? (
               <div className="table-container">
                 <table className="data-table">
                   <thead>
@@ -142,7 +223,7 @@ const AdminPanel = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.map((log, index) => {
+                    {filteredLogs.map((log, index) => {
                       const { time, date } = formatTime(log.timestamp);
                       return (
                         <tr key={log.id || index}>
@@ -155,7 +236,7 @@ const AdminPanel = () => {
                           <td><span className="user-id-badge">#{log.user_id}</span></td>
                           <td>{getUserName(log.user_id)}</td>
                           <td>
-                            <span className={`event-badge ${log.event_type?.toLowerCase()}`}>
+                            <span className={`event-badge ${log.event_type?.toLowerCase().replace('_', '-')}`}>
                               {log.event_type}
                             </span>
                           </td>
@@ -164,7 +245,7 @@ const AdminPanel = () => {
                               {log.category}
                             </span>
                           </td>
-                          <td>{log.notes || '-'}</td>
+                          <td className="notes-cell">{log.notes || '-'}</td>
                         </tr>
                       );
                     })}
@@ -173,7 +254,11 @@ const AdminPanel = () => {
               </div>
             ) : (
               <div className="empty-state">
-                <p>📭 Belum ada data log kehadiran</p>
+                {logs.length > 0 ? (
+                  <p>🔍 Tidak ada log yang cocok dengan filter</p>
+                ) : (
+                  <p>📭 Belum ada data log kehadiran</p>
+                )}
               </div>
             )}
           </section>
