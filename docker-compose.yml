@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Layanan 1: User Identity (Node.js)
+  identity-service:
+    build: ./identity-service
+    ports:
+      - "3040:3040"
+    environment:
+      - PORT=3040
+      - DATABASE_URL=... # Masukkan kredensial supabase Anda di sini atau gunakan .env file
+      - JWT_SECRET=secret123
+    networks:
+      - tendee-network
+
+  # Layanan 2: Attendance (Python)
+  attendance-service:
+    build: ./attendance-service
+    ports:
+      - "3002:3002"
+    environment:
+      # PENTING: Di sini kita kasih tau Python alamat layanan Node.js
+      # "identity-service" adalah nama service di atas
+      - IDENTITY_SERVICE_URL=http://identity-service:3040
+    depends_on:
+      - identity-service
+    networks:
+      - tendee-network
+
+networks:
+  tendee-network:
+    driver: bridge
