@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { submitAttendance, getAttendanceLogs } from '../services/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
@@ -120,6 +122,11 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
+            {isAdmin() && (
+              <button onClick={() => navigate('/admin')} className="admin-button">
+                ⚙️ Admin Panel
+              </button>
+            )}
             <button onClick={logout} className="logout-button">
               🚪 Keluar
             </button>

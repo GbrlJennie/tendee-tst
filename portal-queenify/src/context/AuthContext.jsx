@@ -69,9 +69,10 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
-  // Check if user is admin
+  // Check if user is admin (case-insensitive)
   const isAdmin = () => {
-    return user?.role === 'admin';
+    const role = user?.role?.toLowerCase();
+    return role === 'admin';
   };
 
   const value = {

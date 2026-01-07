@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginForm.css';
 
@@ -7,12 +8,23 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    await login(email, password);
+    const result = await login(email, password);
+    
+    // Redirect berdasarkan role setelah login berhasil
+    if (result.success) {
+      const userRole = result.user?.role?.toLowerCase();
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
+    }
     
     setIsLoading(false);
   };
@@ -58,6 +70,18 @@ const LoginForm = () => {
             {isLoading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
+
+        <div className="demo-credentials">
+          <p className="demo-title">📋 Demo Credentials:</p>
+          <div className="credential-item">
+            <span className="credential-label">Admin:</span>
+            <span className="credential-value">admin@mail.com / admin123</span>
+          </div>
+          <div className="credential-item">
+            <span className="credential-label">Employee:</span>
+            <span className="credential-value">naila@mail.com / user123</span>
+          </div>
+        </div>
       </div>
     </div>
   );

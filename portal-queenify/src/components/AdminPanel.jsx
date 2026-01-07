@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAttendanceLogs, getAllUsers } from '../services/api';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
   const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [users, setUsers] = useState([]);
@@ -15,6 +17,7 @@ const AdminPanel = () => {
   // Filter states
   const [filterDate, setFilterDate] = useState('');
   const [filterUserId, setFilterUserId] = useState('');
+  const [filterName, setFilterName] = useState('');
 
   useEffect(() => {
     fetchAllData();
@@ -23,7 +26,7 @@ const AdminPanel = () => {
   // Apply filters when logs or filter values change
   useEffect(() => {
     applyFilters();
-  }, [logs, filterDate, filterUserId]);
+  }, [logs, filterDate, filterUserId, filterName, users]);
 
   const fetchAllData = async () => {
     await Promise.all([fetchLogs(), fetchUsers()]);
@@ -77,6 +80,7 @@ const AdminPanel = () => {
     console.log('Applying filters to', logs.length, 'logs');
     console.log('Filter date:', filterDate);
     console.log('Filter user ID:', filterUserId);
+    console.log('Filter name:', filterName);
     
     // Filter by date
     if (filterDate) {
@@ -95,6 +99,15 @@ const AdminPanel = () => {
       console.log('After user ID filter:', filtered.length);
     }
     
+    // Filter by name
+    if (filterName) {
+      filtered = filtered.filter(log => {
+        const userName = getUserName(log.user_id).toLowerCase();
+        return userName.includes(filterName.toLowerCase());
+      });
+      console.log('After name filter:', filtered.length);
+    }
+    
     console.log('Final filtered logs:', filtered.length);
     setFilteredLogs(filtered);
   };
@@ -102,6 +115,7 @@ const AdminPanel = () => {
   const clearFilters = () => {
     setFilterDate('');
     setFilterUserId('');
+    setFilterName('');
   };
 
   const formatTime = (dateString) => {
@@ -140,6 +154,9 @@ const AdminPanel = () => {
           </div>
           <div className="admin-actions">
             <span className="admin-badge">👑 Admin: {user?.name}</span>
+            <button onClick={() => navigate('/dashboard')} className="dashboard-button">
+              📊 Dashboard Presensi
+            </button>
             <button onClick={logout} className="logout-button">
               🚪 Keluar
             </button>
@@ -200,7 +217,18 @@ const AdminPanel = () => {
                   className="filter-input"
                 />
               </div>
-              {(filterDate || filterUserId) && (
+              <div className="filter-group">
+                <label htmlFor="filterName">🏷️ Filter Nama:</label>
+                <input
+                  type="text"
+                  id="filterName"
+                  value={filterName}
+                  onChange={(e) => setFilterName(e.target.value)}
+                  placeholder="Cari nama..."
+                  className="filter-input"
+                />
+              </div>
+              {(filterDate || filterUserId || filterName) && (
                 <button onClick={clearFilters} className="clear-filter-btn">
                   ✕ Clear Filter
                 </button>
